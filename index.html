@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Intergalactic Shipyard Dashboard — Real-time spaceship inventory with hostile data normalization, critical alert detection, and a stunning sci-fi interface.">
+    <title>Intergalactic Shipyard — Hostile Data Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Ambient background particles -->
+    <div id="particle-canvas" aria-hidden="true"></div>
+
+    <!-- Top navigation / header -->
+    <header id="main-header">
+        <div class="header-inner">
+            <div class="logo-group">
+                <div class="logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 4L6 14v20l18 10 18-10V14L24 4z" stroke="url(#logo-grad)" stroke-width="2" fill="none"/>
+                        <path d="M24 10l-12 7v14l12 7 12-7V17l-12-7z" fill="url(#logo-grad)" opacity="0.15"/>
+                        <circle cx="24" cy="24" r="5" fill="url(#logo-grad)"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="6" y1="4" x2="42" y2="44">
+                                <stop offset="0%" stop-color="#00d4ff"/>
+                                <stop offset="100%" stop-color="#7b2ff7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Intergalactic Shipyard</h1>
+                    <span class="logo-subtitle">Fleet Inventory Dashboard</span>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div id="search-box" class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search ships, classes, status..." autocomplete="off">
+                </div>
+                <div class="header-stats">
+                    <div class="stat-chip" id="stat-total">
+                        <span class="stat-label">Fleet</span>
+                        <span class="stat-value" id="total-count">—</span>
+                    </div>
+                    <div class="stat-chip stat-chip--alert" id="stat-alerts">
+                        <span class="stat-label">Alerts</span>
+                        <span class="stat-value" id="alert-count">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter bar -->
+    <section id="filter-bar">
+        <div class="filter-inner">
+            <div class="filter-group">
+                <label class="filter-label">View</label>
+                <div class="toggle-group" id="view-toggle">
+                    <button class="toggle-btn active" data-view="grid" id="view-grid-btn" aria-label="Grid view">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+                    </button>
+                    <button class="toggle-btn" data-view="list" id="view-list-btn" aria-label="List view">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="filter-class">Class</label>
+                <select id="filter-class" class="filter-select">
+                    <option value="all">All Classes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="filter-status">Status</label>
+                <select id="filter-status" class="filter-select">
+                    <option value="all">All Statuses</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="filter-core">Core Type</label>
+                <select id="filter-core" class="filter-select">
+                    <option value="all">All Cores</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Alerts Only</label>
+                <button class="toggle-alert-btn" id="filter-alerts-btn" aria-pressed="false">
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </button>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="sort-select">Sort</label>
+                <select id="sort-select" class="filter-select">
+                    <option value="name-asc">Name A→Z</option>
+                    <option value="name-desc">Name Z→A</option>
+                    <option value="price-asc">Price Low→High</option>
+                    <option value="price-desc">Price High→Low</option>
+                    <option value="capacity-asc">Capacity Low→High</option>
+                    <option value="capacity-desc">Capacity High→Low</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main grid / list -->
+    <main id="ship-container">
+        <div id="loading-state" class="loading-state">
+            <div class="loader-ring"></div>
+            <p>Initializing fleet data uplink...</p>
+        </div>
+
+        <!-- Fleet Analytics -->
+        <div id="analytics-panel" class="analytics-panel hidden">
+            <div class="chart-card">
+                <h3 class="chart-title">Status Distribution</h3>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">Core Technology</h3>
+                <div class="chart-wrapper">
+                    <canvas id="coreChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">Fleet Composition</h3>
+                <div class="chart-wrapper">
+                    <canvas id="classChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div id="error-state" class="error-state hidden">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" class="error-icon">
+                <circle cx="32" cy="32" r="28"/>
+                <path d="M32 18v20M32 44v2"/>
+            </svg>
+            <h2>Data Uplink Failed</h2>
+            <p id="error-message">Unable to reach the shipyard API.</p>
+            <button id="retry-btn" class="btn-primary">Retry Connection</button>
+        </div>
+        <div id="empty-state" class="empty-state hidden">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+                <path d="M32 8l-20 12v24l20 12 20-12V20L32 8z"/>
+                <circle cx="32" cy="32" r="8" stroke-dasharray="4 3"/>
+            </svg>
+            <h2>No Ships Found</h2>
+            <p>Try adjusting your filters or search query.</p>
+        </div>
+        <div id="ship-grid" class="ship-grid hidden"></div>
+    </main>
+
+    <!-- Ship detail modal -->
+    <div id="ship-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-ship-name">
+        <div class="modal-content">
+            <button id="modal-close-btn" class="modal-close" aria-label="Close">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="data-normalizer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
