@@ -1,0 +1,12 @@
+{
+  "name": "hostile-data-dashboard",
+  "version": "1.0.0",
+  "description": "Intergalactic Shipyard frontend dashboard for hostile data normalization.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
